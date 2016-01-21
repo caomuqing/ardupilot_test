@@ -905,6 +905,11 @@ mission_failed:
         tracker.gcs[chan-MAVLINK_COMM_0].send_autopilot_version(FIRMWARE_VERSION);
         break;
 
+#if MAVLINK_PROTOCOL_VERSION >= 2
+    case MAVLINK_MSG_ID_SETUP_SIGNING:
+        handle_setup_signing(msg);
+        break;
+#endif
     } // end switch
 } // end handle mavlink
 
