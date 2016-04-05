@@ -529,7 +529,8 @@ void Tracker::mavlink_check_target(const mavlink_message_t* msg)
     for (uint8_t i=0; i < num_gcs; i++) {
         if (gcs[i].initialised) {
             // request position
-            if (comm_get_txspace((mavlink_channel_t)i) - MAVLINK_NUM_NON_PAYLOAD_BYTES >= MAVLINK_MSG_ID_DATA_STREAM_LEN) {
+            if (comm_get_txspace((mavlink_channel_t)i) >=
+                GCS_MAVLINK::packet_overhead_chan((mavlink_channel_t)i) + MAVLINK_MSG_ID_DATA_STREAM_LEN) {
                 mavlink_msg_request_data_stream_send(
                     (mavlink_channel_t)i,
                     msg->sysid,
@@ -539,7 +540,8 @@ void Tracker::mavlink_check_target(const mavlink_message_t* msg)
                     1); // start streaming
             }
             // request air pressure
-            if (comm_get_txspace((mavlink_channel_t)i) - MAVLINK_NUM_NON_PAYLOAD_BYTES >= MAVLINK_MSG_ID_DATA_STREAM_LEN) {
+            if (comm_get_txspace((mavlink_channel_t)i) >=
+                GCS_MAVLINK::packet_overhead_chan((mavlink_channel_t)i) + MAVLINK_MSG_ID_DATA_STREAM_LEN) {
                 mavlink_msg_request_data_stream_send(
                     (mavlink_channel_t)i,
                     msg->sysid,
