@@ -27,6 +27,15 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
     }
 
     switch(mode) {
+
+        case TEST_MODE_1:                                   //added by MQ
+            success = testmode1_init(ignore_checks);
+            break;
+
+        case TEST_MODE_2:                                   //added by MQ
+            success = testmode2_init(ignore_checks);
+            break;
+
         case ACRO:
             #if FRAME_CONFIG == HELI_FRAME
                 success = heli_acro_init(ignore_checks);
@@ -163,6 +172,15 @@ void Copter::update_flight_mode()
     ahrs.getEkfControlLimits(ekfGndSpdLimit, ekfNavVelGainScaler);
 
     switch (control_mode) {
+
+        case TEST_MODE_1:                                   //added by MQ
+            testmode1_run();
+            break;
+
+        case TEST_MODE_2:                                   //added by MQ
+            testmode2_run();
+            break;
+
         case ACRO:
             #if FRAME_CONFIG == HELI_FRAME
                 heli_acro_run();
@@ -369,6 +387,14 @@ void Copter::notify_flight_mode(control_mode_t mode) {
 void Copter::print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
 {
     switch (mode) {
+
+    case TEST_MODE_1:               //added by MQ
+        port->print("TEST_MODE_1");
+        break;
+    case TEST_MODE_2:               //added by MQ
+        port->print("TEST_MODE_2");
+        break;
+
     case STABILIZE:
         port->print("STABILIZE");
         break;

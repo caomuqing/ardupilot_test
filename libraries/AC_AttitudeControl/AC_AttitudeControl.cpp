@@ -307,7 +307,7 @@ void AC_AttitudeControl::input_euler_rate_roll_pitch_yaw(float euler_roll_rate_c
     float euler_pitch_rate = radians(euler_pitch_rate_cds*0.01f);
     float euler_yaw_rate = radians(euler_yaw_rate_cds*0.01f);
 
-    // calculate the attitude target euler angles
+    // calculate the attitude target euler angles; to_euler is in AP_Math quaternion.cpp
     _attitude_target_quat.to_euler(_attitude_target_euler_angle.x, _attitude_target_euler_angle.y, _attitude_target_euler_angle.z);
 
     if (_rate_bf_ff_enabled & _use_ff_and_input_shaping) {
@@ -383,6 +383,7 @@ void AC_AttitudeControl::attitude_controller_run_quat()
 {
     // Retrieve quaternion vehicle attitude
     // TODO add _ahrs.get_quaternion()
+    //from_rotation_matrix is defined in AP_MATH quanternion.cpp
     Quaternion attitude_vehicle_quat;
     attitude_vehicle_quat.from_rotation_matrix(_ahrs.get_rotation_body_to_ned());
 
@@ -431,7 +432,7 @@ void AC_AttitudeControl::attitude_controller_run_quat()
 void AC_AttitudeControl::thrust_heading_rotation_angles(Quaternion& att_to_quat, const Quaternion& att_from_quat, Vector3f& att_diff_angle, float& thrust_vec_dot)
 {
     Matrix3f att_to_rot_matrix; // earth frame to target frame
-    att_to_quat.rotation_matrix(att_to_rot_matrix);
+    att_to_quat.rotation_matrix(att_to_rot_matrix); //rotation_matrix in quaternion.cpp, convert quaternion to matrix form
     Vector3f att_to_thrust_vec = att_to_rot_matrix*Vector3f(0.0f,0.0f,1.0f);
 
     Matrix3f att_from_rot_matrix; // earth frame to target frame
@@ -694,7 +695,7 @@ float AC_AttitudeControl::sqrt_controller(float error, float p, float second_ord
         return error*p;
     }
 
-    float linear_dist = second_ord_lim/sq(p);
+    float linear_dist = second_ord_lim/sq(p);// sq()function in math.h
 
     if (error > linear_dist) {
         return safe_sqrt(2.0f*second_ord_lim*(error-(linear_dist/2.0f)));

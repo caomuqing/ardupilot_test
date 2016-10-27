@@ -89,16 +89,33 @@ NOINLINE void Copter::send_heartbeat(mavlink_channel_t chan)
                                             system_status);
 }
 
+
+NOINLINE void Copter::send_tera_distance(mavlink_channel_t chan)  //MQ, Teraranger
+{
+    mavlink_msg_tera_send(
+        chan,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f);
+}
+
 NOINLINE void Copter::send_attitude(mavlink_channel_t chan)
 {
     const Vector3f &gyro = ins.get_gyro();
     mavlink_msg_attitude_send(
         chan,
         millis(),
-        ahrs.roll,
-        ahrs.pitch,
-        ahrs.yaw,
-        gyro.x,
+        distance_1*3.14159/180,  //MQ for testing only
+        distance_2*3.14159/180,   //MQ for testing only
+        distance_3*3.14159/180,  //MQ for testing only
+        distance_4*3.14159/180,  //MQ for testing only
+        //ahrs.roll,  //please uncomment
+        //ahrs.pitch,
+        //ahrs.yaw,
+        //gyro.x,
+        //123,
+        //456);
         gyro.y,
         gyro.z);
 }
@@ -371,6 +388,10 @@ void NOINLINE Copter::send_servo_out(mavlink_channel_t chan)
         g.rc_2.get_servo_out(),
         g.rc_3.get_radio_out(),
         g.rc_4.get_servo_out(),
+        //distance_1,  //test test MQ
+        //distance_2,    //test test MQ
+        //distance_3,     //test test MQ
+        //distance_4,         //test test MQ
         10000 * g.rc_1.norm_output(),
         10000 * g.rc_2.norm_output(),
         10000 * g.rc_3.norm_output(),
@@ -397,19 +418,21 @@ void NOINLINE Copter::send_current_waypoint(mavlink_channel_t chan)
     mavlink_msg_mission_current_send(chan, mission.get_current_nav_index());
 }
 
-#if RANGEFINDER_ENABLED == ENABLED
+#if RANGEFINDER_ENABLED == ENABLED    //please un comment this MQ
 void NOINLINE Copter::send_rangefinder(mavlink_channel_t chan)
 {
     // exit immediately if rangefinder is disabled
-    if (!rangefinder.has_data()) {
+    if (!rangefinder.has_data()) {   //please uncomment this Mq
         return;
     }
     mavlink_msg_rangefinder_send(
             chan,
-            rangefinder.distance_cm() * 0.01f,
-            rangefinder.voltage_mv() * 0.001f);
+            //distance_1*0.001f,
+            //distance_2*0.001f);   //test test MQ
+            rangefinder.distance_cm() * 0.01f,  //REMOVE FOR TESTING MQ
+            rangefinder.voltage_mv() * 0.001f); //REMOVE FOR TESTING
 }
-#endif
+#endif          
 
 /*
   send RPM packet

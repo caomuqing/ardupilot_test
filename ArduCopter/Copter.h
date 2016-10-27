@@ -25,6 +25,8 @@
 #include <cmath>
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>          //added by MQ to get isdigit() function
+#include <string.h>         //mq tera
 
 #include <AP_HAL/AP_HAL.h>
 
@@ -635,6 +637,32 @@ private:
     static const AP_Param::Info var_info[];
     static const struct LogStructure log_structure[];
 
+
+    AP_HAL::UARTDriver *uart_T = nullptr;      //added by MQ for teraranger
+    char element_buf_T[4][5];    //added by MQ for teraranger
+    uint8_t element_len_T[4];          //added by MQ for teraranger
+    uint8_t element_num_T;         //added by MQ for teraranger
+    bool ignore_reply_T;              //added by MQ for teraranger         // true if we should ignore the incoming message (because it is just echoing our command)
+    bool wait_for_H;   //added by MQ for teraranger
+    float distance_1;  //mq
+    float distance_2; //mq
+    float distance_3; //mq
+    float distance_4;//mq
+#define BUFFER_SIZE 19   //mq for tera
+
+ 
+
+   uint8_t input_buffer[BUFFER_SIZE];   //mq for tera
+   int buffer_ctr;                //mq for tera
+
+
+
+    bool process_input_teraranger();   //added by MQ for teraranger
+    bool process_reply_T();   //added by MQ for teraranger
+    void clear_buffers_T();   //added by MQ for teraranger
+    uint8_t crc8(uint8_t *p, uint8_t len); ////added by MQ for teraranger
+    bool process_input_teraranger2(); //added by MQ for teraranger
+
     void compass_accumulate(void);
     void compass_cal_update(void);
     void barometer_accumulate(void);
@@ -698,6 +726,7 @@ private:
     void gcs_send_deferred(void);
     void send_heartbeat(mavlink_channel_t chan);
     void send_attitude(mavlink_channel_t chan);
+    void send_tera_distance(mavlink_channel_t chan); //MQ, TERA
     void send_limits_status(mavlink_channel_t chan);
     void send_extended_status1(mavlink_channel_t chan);
     void send_location(mavlink_channel_t chan);
@@ -919,6 +948,11 @@ private:
     void parachute_check();
     void parachute_release();
     void parachute_manual_release();
+
+    bool testmode1_init(bool ignore_checks);  //added by MQ
+    void testmode1_run();                       //added by MQ
+    bool testmode2_init(bool ignore_checks);  //added by MQ
+    void testmode2_run();                       //added by MQ
 
     // support for AP_Avoidance custom flight mode, AVOID_ADSB
     bool avoid_adsb_init(bool ignore_checks);
