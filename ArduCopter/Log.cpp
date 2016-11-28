@@ -2,6 +2,7 @@
 
 #include "Copter.h"
 #include "version.h"
+//#include <AP_Airspeed/AP_Airspeed.h>  //MQ
 
 #if LOGGING_ENABLED == ENABLED
 
@@ -216,7 +217,7 @@ void Copter::Log_Write_AutoTuneDetails(float angle_cd, float rate_cds)
 // Write a Current data packet
 void Copter::Log_Write_Current()
 {
-    DataFlash.Log_Write_Current(battery);
+    DataFlash.Log_Write_Current(battery);  //MQ Edit to record airspeed
 
     // also write power status
     DataFlash.Log_Write_Power();
@@ -336,7 +337,7 @@ void Copter::Log_Write_Control_Tuning()
         baro_alt            : baro_alt,
         desired_rangefinder_alt : (int16_t)target_rangefinder_alt,
         rangefinder_alt     : rangefinder_state.alt_cm,
-        terr_alt            : terr_alt,
+        terr_alt            : distance_1,    //MQ change Tto CARRY airspeed info  (original:terr_alt)
         target_climb_rate   : (int16_t)pos_control.get_vel_target_z(),
         climb_rate          : climb_rate
     };

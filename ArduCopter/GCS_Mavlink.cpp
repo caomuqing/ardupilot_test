@@ -106,14 +106,14 @@ NOINLINE void Copter::send_attitude(mavlink_channel_t chan)
     mavlink_msg_attitude_send(
         chan,
         millis(),
-        distance_1*3.14159/180,  //MQ for testing only
-        distance_2*3.14159/180,   //MQ for testing only
-        distance_3*3.14159/180,  //MQ for testing only
-        distance_4*3.14159/180,  //MQ for testing only
-        //ahrs.roll,  //please uncomment
-        //ahrs.pitch,
-        //ahrs.yaw,
-        //gyro.x,
+        //distance_1*3.14159/180,  //MQ for testing only
+        //distance_2*3.14159/180,   //MQ for testing only
+        //distance_3*3.14159/180,  //MQ for testing only
+        //distance_4*3.14159/180,  //MQ for testing only
+        ahrs.roll,  //please uncomment
+        ahrs.pitch,
+        ahrs.yaw,
+        gyro.x,
         //123,
         //456);
         gyro.y,

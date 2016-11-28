@@ -174,10 +174,17 @@ void Copter::setup()
     perf_info_reset();
     fast_loopTimer = AP_HAL::micros();
 
-    buffer_ctr=0;   //mq tera
-    hal.uartE->begin(921600);  //added by MQ for teraranger
-    hal.uartE->println("BBB");
-    hal.uartE->printf("PPP");
+    //buffer_ctr=0;   //mq tera
+    //hal.uartE->begin(921600);  //added by MQ for teraranger
+    //hal.uartE->println("BBB");
+    //hal.uartE->printf("PPP");
+
+    AP_Param::set_object_value(&airspeed, airspeed.var_info, "_PIN", 65);   //MQ Airspeed
+    AP_Param::set_object_value(&airspeed, airspeed.var_info, "_ENABLE", 1);
+    AP_Param::set_object_value(&airspeed, airspeed.var_info, "_USE", 1);
+
+    airspeed.init();        //MQ Airspeed
+    airspeed.calibrate(false);
 
 }
 
@@ -297,6 +304,7 @@ void Copter::fast_loop()
      //process_input_teraranger2();   //MQ, teraranger
      //hal.uartE->printf("BBB");       //mq tera
 
+
 }
 
 // rc_loops - reads user input from transmitter/receiver
@@ -330,8 +338,8 @@ void Copter::throttle_loop()
     // compensate for ground effect (if enabled)
     update_ground_effect_detector();
 
-    process_input_teraranger2();   //MQ, teraranger,set at 100hz
-
+    //process_input_teraranger2();   //MQ, teraranger,set at 100hz
+    //read_airspeed();    //mq AIRSPEED SENSOR
 }
 
 // update_mount - update camera mount position
@@ -374,6 +382,9 @@ void Copter::update_batt_compass(void)
             DataFlash.Log_Write_Compass(compass);
         }
     }
+
+   read_airspeed();    //mq AIRSPEED SENSOR run at 10hz
+
 }
 
 // ten_hz_logging_loop
@@ -415,6 +426,8 @@ void Copter::ten_hz_logging_loop()
 #if FRAME_CONFIG == HELI_FRAME
     Log_Write_Heli();
 #endif
+
+
 }
 
 // fifty_hz_logging_loop
@@ -448,11 +461,15 @@ void Copter::twentyfive_hz_logging()
     // log output
     Log_Write_Precland();
 #endif
+
+    
+
 }
 
 void Copter::dataflash_periodic(void)
 {
     DataFlash.periodic_tasks();
+    //DataFlash.Log_Write_Airspeed(airspeed);  //MQ airspeed
 }
 
 // three_hz_loop - 3.3hz loop
@@ -477,6 +494,8 @@ void Copter::three_hz_loop()
 
     // update ch6 in flight tuning
     tuning();
+
+    
 }
 
 // one_hz_loop - runs at 1Hz
@@ -518,6 +537,8 @@ void Copter::one_hz_loop()
     terrain_logging();
 
     adsb.set_is_flying(!ap.land_complete);
+
+
 }
 
 // called at 50hz
@@ -645,6 +666,7 @@ void Copter::update_altitude()
 
 AP_HAL_MAIN_CALLBACKS(&copter);
 
+/*
 
     bool Copter::process_input_teraranger()   //added by MQ for teraranger
 {
@@ -926,3 +948,13 @@ int16_t nbytes = uart_T->available();
   return true;
 
 }  //
+
+*/
+
+void Copter::read_airspeed()  //mq read_airspeed
+{
+    //distance_1 = airspeed.get_airspeed_cm();
+    airspeed.read();
+    distance_1 = airspeed.get_airspeed();
+
+}

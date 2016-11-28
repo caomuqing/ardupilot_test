@@ -5,6 +5,7 @@
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_Baro/AP_Baro.h>
 #include <AP_BattMonitor/AP_BattMonitor.h>
+//#include <AP_Airspeed/AP_Airspeed.h> //MQ Airspeed
 #include <AP_Compass/AP_Compass.h>
 #include <AP_HAL/AP_HAL.h>
 #include <AP_Math/AP_Math.h>
@@ -1545,7 +1546,7 @@ void DataFlash_Class::Log_Write_EKF2(AP_AHRS_NavEKF &ahrs, bool optFlowEnabled)
         WriteBlock(&pkt9, sizeof(pkt9));
     }
 }
-#endif
+#endif 
 
 // Write a command processing packet
 bool DataFlash_Backend::Log_Write_MavCmd(uint16_t cmd_total, const mavlink_mission_item_t& mav_cmd)
@@ -1648,6 +1649,7 @@ void DataFlash_Class::Log_Write_Attitude(AP_AHRS &ahrs, const Vector3f &targets)
 }
 
 // Write an Current data packet
+
 void DataFlash_Class::Log_Write_Current(const AP_BattMonitor &battery)
 {
     if (battery.num_instances() >= 1) {
@@ -1798,6 +1800,7 @@ void DataFlash_Class::Log_Write_ESC(void)
 #endif // CONFIG_HAL_BOARD
 }
 
+
 // Write a AIRSPEED packet
 void DataFlash_Class::Log_Write_Airspeed(AP_Airspeed &airspeed)
 {
@@ -1808,7 +1811,7 @@ void DataFlash_Class::Log_Write_Airspeed(AP_Airspeed &airspeed)
     struct log_AIRSPEED pkt = {
         LOG_PACKET_HEADER_INIT(LOG_ARSP_MSG),
         time_us       : AP_HAL::micros64(),
-        airspeed      : airspeed.get_raw_airspeed(),
+        airspeed      : airspeed.get_airspeed(),   //MQ Edit
         diffpressure  : airspeed.get_differential_pressure(),
         temperature   : (int16_t)(temperature * 100.0f),
         rawpressure   : airspeed.get_corrected_pressure(),
@@ -1817,6 +1820,7 @@ void DataFlash_Class::Log_Write_Airspeed(AP_Airspeed &airspeed)
     };
     WriteBlock(&pkt, sizeof(pkt));
 }
+
 
 // Write a Yaw PID packet
 void DataFlash_Class::Log_Write_PID(uint8_t msg_type, const PID_Info &info)

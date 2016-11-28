@@ -22,12 +22,14 @@
 #include <AP_ADC/AP_ADC.h>
 #include <AP_Airspeed/AP_Airspeed.h>
 #include <AP_HAL/AP_HAL.h>
+//#include <AP_Airspeed/AP_Airspeed_I2C.h>
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
 float temperature;
 
 AP_Airspeed airspeed;
+//AP_Airspeed_I2C airspeed_i2c;
 
 void setup()
 {

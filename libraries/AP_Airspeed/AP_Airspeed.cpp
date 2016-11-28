@@ -176,7 +176,7 @@ float AP_Airspeed::get_pressure(void)
         return _hil_pressure;
     }
     float pressure = 0;
-    if (_pin == AP_AIRSPEED_I2C_PIN) {
+    if (true) {   //_pin == AP_AIRSPEED_I2C_PIN removed by MQ
         _healthy = digital.get_differential_pressure(pressure);
     } else {
         _healthy = analog.get_differential_pressure(pressure);

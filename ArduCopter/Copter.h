@@ -650,18 +650,21 @@ private:
     float distance_4;//mq
 #define BUFFER_SIZE 19   //mq for tera
 
- 
+     // Airspeed Sensors  MQ
+    AP_Airspeed airspeed;
+
 
    uint8_t input_buffer[BUFFER_SIZE];   //mq for tera
    int buffer_ctr;                //mq for tera
 
 
 
-    bool process_input_teraranger();   //added by MQ for teraranger
-    bool process_reply_T();   //added by MQ for teraranger
-    void clear_buffers_T();   //added by MQ for teraranger
-    uint8_t crc8(uint8_t *p, uint8_t len); ////added by MQ for teraranger
-    bool process_input_teraranger2(); //added by MQ for teraranger
+    //bool process_input_teraranger();   //added by MQ for teraranger
+    //bool process_reply_T();   //added by MQ for teraranger
+    //void clear_buffers_T();   //added by MQ for teraranger
+    //uint8_t crc8(uint8_t *p, uint8_t len); ////added by MQ for teraranger
+    //bool process_input_teraranger2(); //added by MQ for teraranger
+    void read_airspeed();       //mq airspeed
 
     void compass_accumulate(void);
     void compass_cal_update(void);
