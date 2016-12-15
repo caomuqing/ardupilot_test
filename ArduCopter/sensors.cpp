@@ -34,7 +34,9 @@ void Copter::init_rangefinder(void)
    rangefinder_state.enabled = (rangefinder.num_sensors() >= 1);
 
 #endif
-
+   distance_k_plus = 1000.0; //mq, initialize the distance in cm
+   P_k_plus = 100.0 ;         //mq, initialize the gain for kalman
+   velocity_for_distance_estimation = 0.0; //mq, initialize the velocity
 }
 
 // return rangefinder altitude in centimeters
@@ -51,13 +53,16 @@ void Copter::read_rangefinder(void)
 
     if(rangefinder.has_data(1))                   //mq, object detection}
     {   
+
+        /*
         sonar_distance10 = sonar_distance9; //apply median filter, mq
         sonar_distance9 = sonar_distance8; 
         sonar_distance8 = sonar_distance7; 
         sonar_distance7 = sonar_distance6; 
         sonar_distance6 = sonar_distance5; 
         sonar_distance5 = sonar_distance4; 
-        sonar_distance4 = sonar_distance3;          
+        sonar_distance4 = sonar_distance3; 
+        */         
         sonar_distance3 = sonar_distance2;
         sonar_distance2 = sonar_distance1;
         sonar_distance1 = rangefinder.distance_cm(1); 
@@ -79,6 +84,7 @@ void Copter::read_rangefinder(void)
     }
     else    {sonar_distance_used = 1000;}       //mq, object detection
     
+    estimate_distance(); 
 
  #if RANGEFINDER_TILT_CORRECTION == ENABLED
     // correct alt for angle of the rangefinder
@@ -109,6 +115,25 @@ void Copter::read_rangefinder(void)
     rangefinder_state.alt_cm = 0;
 #endif
 }
+
+void Copter::estimate_distance()        //mq kalman filter for sideway distance estimation
+{
+    float system_covariance_Q = 20.0;   //in cm/s
+    float measurement_covariance_R = 100.0;  //in cm
+    float dt = 0.05 ;//20hz loop for rangefinder
+
+    //kalman filter loop
+    float P_k_minus = P_k_plus + system_covariance_Q;
+    float K_k = P_k_minus/(P_k_plus+measurement_covariance_R);
+    distance_k_plus = (1-K_k)*(distance_k_plus - velocity_for_distance_estimation * dt) + K_k*sonar_distance_used;
+    P_k_plus = (1- K_k) * P_k_minus;
+
+    //get roll velocity for next loop
+    const Vector3f& vel = inertial_nav.get_velocity();    //from drift mode
+    float roll_vel =  vel.y * ahrs.cos_yaw() - vel.x * ahrs.sin_yaw(); // mq, body roll vel in cm/s
+    velocity_for_distance_estimation = roll_vel;
+}
+
 
 // return true if rangefinder_alt can be used
 bool Copter::rangefinder_alt_ok()

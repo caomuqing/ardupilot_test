@@ -662,6 +662,9 @@ private:
     int16_t sonar_distance9;  //mq, object detection
     int16_t sonar_distance10;  //mq, object detection
     int16_t sonar_distance_used; //mq
+    float distance_k_plus;  //mq
+    float P_k_plus;
+    float velocity_for_distance_estimation;
 
 #define BUFFER_SIZE 19   //mq for tera
 
@@ -680,7 +683,7 @@ private:
     //uint8_t crc8(uint8_t *p, uint8_t len); ////added by MQ for teraranger
     //bool process_input_teraranger2(); //added by MQ for teraranger
     void read_airspeed();       //mq airspeed
-
+    void estimate_distance() ;  //mq object avoidance
     void compass_accumulate(void);
     void compass_cal_update(void);
     void barometer_accumulate(void);

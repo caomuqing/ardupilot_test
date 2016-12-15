@@ -53,11 +53,11 @@ void Copter::testmode1_run()
     //    return;
     //}
 
-    float obstacle_distance_limit = 80;  //mq, in cm
+    float obstacle_distance_limit = 100;  //mq, in cm parameter
     float scaling_factor = 10;  //mq
-    float Kp = 6.0;
-    float Ki = 0.02;
-    float Kd = 0.005;
+    float Kp = 6.0;     //parameter
+    float Ki = 0.02;    //parameter
+    float Kd = 0.005;   //parameter
 
 
     AltHoldModeState althold_state;
@@ -85,7 +85,7 @@ void Copter::testmode1_run()
 
     // rotate roll, pitch input from north facing to vehicle's perspective
     float roll_vel =  vel.y * ahrs.cos_yaw() - vel.x * ahrs.sin_yaw(); // mq, body roll vel in cm/s
-    float target_roll_vel = scaling_factor *(sonar_distance_used - obstacle_distance_limit);  //mq, in cm/s
+    float target_roll_vel = scaling_factor *(distance_k_plus - obstacle_distance_limit);  //mq, in cm/s
 
 #if FRAME_CONFIG == HELI_FRAME
     // helicopters are held on the ground until rotor speed runup has finished
@@ -169,7 +169,7 @@ void Copter::testmode1_run()
 
 
         // start of object detection and ovoidance part, mq
-        if (sonar_distance_used < obstacle_distance_limit)  //if object if very close
+        if (distance_k_plus < obstacle_distance_limit)  //if object if very close
         {
 
             target_roll = PID_control(roll_vel, target_roll_vel, target_roll, Kp, Ki, Kd, &I_accumulation_right);
@@ -251,13 +251,13 @@ float Copter::PID_control(float current_tate, float target_state, float input, f
     float I_term_previous = *I_previous;
     float error =target_state - current_tate; //in cm/s
     float error_factor=1.0; //
-    float outside_fence = 120.0;
-    float inside_fence = 80.0;
+    float outside_fence = 130.0;  //parameter
+    float inside_fence = 110.0;     //parameter
 
-    if (sonar_distance_used< outside_fence)  //scale down the input when error approach limit
-        {error_factor = (sonar_distance_used - inside_fence)/(outside_fence - inside_fence); //proportionally scale down the input between fence and outskirt
+    if ( distance_k_plus< outside_fence)  //scale down the input when error approach limit
+        {error_factor = ( distance_k_plus - inside_fence)/(outside_fence - inside_fence); //proportionally scale down the input between fence and outskirt
 
-            if (sonar_distance_used < inside_fence)
+            if ( distance_k_plus < inside_fence)
             {
                 error_factor = 0.0; //no input when it is within the fence
             }

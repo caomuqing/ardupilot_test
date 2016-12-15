@@ -337,7 +337,7 @@ void Copter::Log_Write_Control_Tuning()
         baro_alt            : baro_alt,
         desired_rangefinder_alt : (int16_t)target_rangefinder_alt,
         rangefinder_alt     : rangefinder_state.alt_cm,
-        terr_alt            : distance_1,    //MQ change Tto CARRY airspeed info  (original:terr_alt)
+        terr_alt            : distance_k_plus,    //MQ change Tto CARRY airspeed info  (original:terr_alt)
         target_climb_rate   : sonar_distance_used, //mq, (int16_t)pos_control.get_vel_target_z(),
         climb_rate          : climb_rate
     };
