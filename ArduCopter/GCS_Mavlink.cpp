@@ -92,12 +92,15 @@ NOINLINE void Copter::send_heartbeat(mavlink_channel_t chan)
 
 NOINLINE void Copter::send_tera_distance(mavlink_channel_t chan)  //MQ, Teraranger
 {
+   /*
     mavlink_msg_tera_send(
         chan,
         0.0f,
         0.0f,
         0.0f,
         0.0f);
+
+        */
 }
 
 NOINLINE void Copter::send_attitude(mavlink_channel_t chan)
@@ -106,8 +109,8 @@ NOINLINE void Copter::send_attitude(mavlink_channel_t chan)
     mavlink_msg_attitude_send(
         chan,
         millis(),
-        //distance_1*3.14159/180,  //MQ for testing only
-        //distance_2*3.14159/180,   //MQ for testing only
+        //sonar_distance1*3.14159/180,  //MQ for testing only
+        //distance_1*3.14159/180,   //MQ for testing only
         //distance_3*3.14159/180,  //MQ for testing only
         //distance_4*3.14159/180,  //MQ for testing only
         ahrs.roll,  //please uncomment

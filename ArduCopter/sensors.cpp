@@ -32,18 +32,53 @@ void Copter::init_rangefinder(void)
    rangefinder.init();
    rangefinder_state.alt_cm_filt.set_cutoff_frequency(RANGEFINDER_WPNAV_FILT_HZ);
    rangefinder_state.enabled = (rangefinder.num_sensors() >= 1);
+
 #endif
+
 }
 
 // return rangefinder altitude in centimeters
 void Copter::read_rangefinder(void)
 {
+    int16_t sonar_fence = 80; //mq, in cm
+
 #if RANGEFINDER_ENABLED == ENABLED
     rangefinder.update();
 
     rangefinder_state.alt_healthy = ((rangefinder.status() == RangeFinder::RangeFinder_Good) && (rangefinder.range_valid_count() >= RANGEFINDER_HEALTH_MAX));
 
     int16_t temp_alt = rangefinder.distance_cm();
+
+    if(rangefinder.has_data(1))                   //mq, object detection}
+    {   
+        sonar_distance10 = sonar_distance9; //apply median filter, mq
+        sonar_distance9 = sonar_distance8; 
+        sonar_distance8 = sonar_distance7; 
+        sonar_distance7 = sonar_distance6; 
+        sonar_distance6 = sonar_distance5; 
+        sonar_distance5 = sonar_distance4; 
+        sonar_distance4 = sonar_distance3;          
+        sonar_distance3 = sonar_distance2;
+        sonar_distance2 = sonar_distance1;
+        sonar_distance1 = rangefinder.distance_cm(1); 
+        
+        
+        if (sonar_distance1 < sonar_fence)      //mq, simple filter test
+            {   if (sonar_distance2 > sonar_fence)
+                {
+                  sonar_distance_used = sonar_distance2;  
+                }
+                else    {sonar_distance_used = sonar_distance1;}
+            }
+        else    {sonar_distance_used = sonar_distance1;}
+
+        
+
+        //int16_t sonar_distance_sum = sonar_distance1 + sonar_distance2 + sonar_distance3 + sonar_distance4 + sonar_distance5 + sonar_distance6 + sonar_distance7 + sonar_distance8 + sonar_distance9 + sonar_distance10;
+        //sonar_distance_used = sonar_distance_sum / 10;
+    }
+    else    {sonar_distance_used = 1000;}       //mq, object detection
+    
 
  #if RANGEFINDER_TILT_CORRECTION == ENABLED
     // correct alt for angle of the rangefinder

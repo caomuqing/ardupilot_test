@@ -120,6 +120,9 @@ public:
         return distance_cm(primary_instance);
     }
 
+
+    //uint16_t sonar_distance_1;       //define by mq
+
     uint16_t voltage_mv(uint8_t instance) const {
         return _RangeFinder_STATE(instance).voltage_mv;
     }
@@ -188,6 +191,7 @@ private:
     uint8_t primary_instance:3;
     uint8_t num_instances:3;
     float estimated_terrain_height;
+
     AP_SerialManager &serial_manager;
 
     void detect_instance(uint8_t instance);

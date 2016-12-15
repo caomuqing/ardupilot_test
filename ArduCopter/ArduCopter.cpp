@@ -185,6 +185,16 @@ void Copter::setup()
 
     airspeed.init();        //MQ Airspeed
     airspeed.calibrate(false);
+    sonar_distance1 = 0;  //mq, object detection
+    sonar_distance2 = 0;  //mq, object detection
+    sonar_distance3 = 0;  //mq, object detection
+    sonar_distance4 = 0;  //mq, object detection
+    sonar_distance5 = 0;  //mq, object detection
+    sonar_distance6 = 0;  //mq, object detection
+    sonar_distance7 = 0;  //mq, object detection
+    sonar_distance8 = 0;  //mq, object detection
+    sonar_distance9 = 0;  //mq, object detection
+    sonar_distance10 = 0;  //mq, object detection
 
 }
 

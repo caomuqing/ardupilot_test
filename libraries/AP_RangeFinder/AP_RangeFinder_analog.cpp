@@ -117,6 +117,7 @@ void AP_RangeFinder_analog::update(void)
     }
     state.distance_cm = dist_m * 100.0f;  
 
+    
     // update range_valid state based on distance measured
     update_status();
 }

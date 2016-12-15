@@ -35,6 +35,9 @@ bool Copter::testmode1_init(bool ignore_checks)
     // stop takeoff if running
     takeoff_stop();
 
+    I_accumulation_right = 0.0; //mq obstacle avoidance
+    I_accumulation_left = 0.0; //mq obstacle avoidance
+
     return true;
 }
 
@@ -49,6 +52,12 @@ void Copter::testmode1_run()
     //    attitude_control.set_throttle_out(0, false);
     //    return;
     //}
+
+    float obstacle_distance_limit = 80;  //mq, in cm
+    float scaling_factor = 10;  //mq
+    float Kp = 6.0;
+    float Ki = 0.02;
+    float Kd = 0.005;
 
 
     AltHoldModeState althold_state;
@@ -71,6 +80,12 @@ void Copter::testmode1_run()
     // get pilot desired climb rate
     float target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
     target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+
+    const Vector3f& vel = inertial_nav.get_velocity();    //from drift mode
+
+    // rotate roll, pitch input from north facing to vehicle's perspective
+    float roll_vel =  vel.y * ahrs.cos_yaw() - vel.x * ahrs.sin_yaw(); // mq, body roll vel in cm/s
+    float target_roll_vel = scaling_factor *(sonar_distance_used - obstacle_distance_limit);  //mq, in cm/s
 
 #if FRAME_CONFIG == HELI_FRAME
     // helicopters are held on the ground until rotor speed runup has finished
@@ -151,6 +166,32 @@ void Copter::testmode1_run()
     case AltHold_Flying:
         motors.set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
         // call attitude controller
+
+
+        // start of object detection and ovoidance part, mq
+        if (sonar_distance_used < obstacle_distance_limit)  //if object if very close
+        {
+
+            target_roll = PID_control(roll_vel, target_roll_vel, target_roll, Kp, Ki, Kd, &I_accumulation_right);
+
+        }
+
+
+        else{
+            if (roll_vel>target_roll_vel/5.0)   //activate only if veloity of approach limit is too high
+                {target_roll = PID_control(roll_vel, target_roll_vel/5.0, target_roll, Kp, Ki, Kd, &I_accumulation_right);
+
+                }
+
+            else {I_accumulation_right = 0.0; }
+
+            }
+
+            target_roll = constrain_float(target_roll, -4500.0, 4500.0);  //mq, constrain the output angle to +-40degree
+
+           // distance_1 = target_roll;
+            //end of object detection and avoidance part, mq
+
         attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate, get_smoothing_gain());
 
         // adjust climb rate using rangefinder
@@ -175,4 +216,58 @@ void Copter::testmode1_run()
 
     // call position controller's z-axis controller or simply pass through throttle
     //   attitude_control.set_throttle_out(desired throttle, true);
+}
+
+
+/*
+void Copter::object_fence_right(float obstacle_distance_limit)
+{
+    if (sonar_distance1 < obstacle_distance_limit)  //if object if very close
+    {
+
+        target_roll = PID_control(roll_vel, target_roll_vel, target_roll, Kp, Ki, Kd, I_accumulation_right);
+
+    }
+
+
+    else{
+        if (roll_vel>target_roll_vel)   //activate only if veloity of approach limit is too high
+            {target_roll = PID_control(roll_vel, target_roll_vel, target_roll, Kp, Ki, Kd, I_accumulation_right);
+
+            }
+
+        else {I_accumulation_right = 0.0; }
+
+        }
+
+}
+
+*/
+
+float Copter::PID_control(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float *I_previous)
+{   float output;
+    float dt = 0.0025; //400hz loop
+    float P_term, I_term, D_term;
+    float I_term_previous = *I_previous;
+    float error =target_state - current_tate; //in cm/s
+    float error_factor=1.0; //
+    float outside_fence = 120.0;
+    float inside_fence = 80.0;
+
+    if (sonar_distance_used< outside_fence)  //scale down the input when error approach limit
+        {error_factor = (sonar_distance_used - inside_fence)/(outside_fence - inside_fence); //proportionally scale down the input between fence and outskirt
+
+            if (sonar_distance_used < inside_fence)
+            {
+                error_factor = 0.0; //no input when it is within the fence
+            }
+
+        }
+
+    P_term = Kp*error;
+    D_term = 0;
+    I_term = I_term_previous + error*Ki;
+    output = input*error_factor + P_term + I_term + D_term; //scaled input plus PID terms
+    *I_previous = I_term;
+    return output;
 }

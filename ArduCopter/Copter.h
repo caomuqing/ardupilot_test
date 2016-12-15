@@ -648,6 +648,21 @@ private:
     float distance_2; //mq
     float distance_3; //mq
     float distance_4;//mq
+    
+    float I_accumulation_right;  //mq, object detection
+    float I_accumulation_left;  //mq, object detection
+    int16_t sonar_distance1;  //mq, object detection
+    int16_t sonar_distance2;  //mq, object detection
+    int16_t sonar_distance3;  //mq, object detection
+    int16_t sonar_distance4;  //mq, object detection
+    int16_t sonar_distance5;  //mq, object detection
+    int16_t sonar_distance6;  //mq, object detection
+    int16_t sonar_distance7;  //mq, object detection
+    int16_t sonar_distance8;  //mq, object detection
+    int16_t sonar_distance9;  //mq, object detection
+    int16_t sonar_distance10;  //mq, object detection
+    int16_t sonar_distance_used; //mq
+
 #define BUFFER_SIZE 19   //mq for tera
 
      // Airspeed Sensors  MQ
@@ -956,6 +971,9 @@ private:
     void testmode1_run();                       //added by MQ
     bool testmode2_init(bool ignore_checks);  //added by MQ
     void testmode2_run();                       //added by MQ
+    //void object_fence_right(); //mq obstacle
+    float PID_control(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float *I_previous); //mq obstacle
+
 
     // support for AP_Avoidance custom flight mode, AVOID_ADSB
     bool avoid_adsb_init(bool ignore_checks);
