@@ -638,6 +638,7 @@ private:
     static const struct LogStructure log_structure[];
 
 
+    bool teraranger_enable; //mq set to true to enable reading from teraranger hub
     AP_HAL::UARTDriver *uart_T = nullptr;      //added by MQ for teraranger
     char element_buf_T[4][5];    //added by MQ for teraranger
     uint8_t element_len_T[4];          //added by MQ for teraranger
@@ -646,14 +647,17 @@ private:
     bool wait_for_H;   //added by MQ for teraranger
     float distance_1;  //mq
     float distance_2; //mq
-    float distance_3; //mq
-    float distance_4;//mq
+    float tera_distance_left; //mq
+    float tera_distance_right;//mq
+    //const uint8_t crc_table[];
     
     float I_accumulation_right;  //mq, object detection
     float I_accumulation_left;  //mq, object detection
     int16_t sonar_distance1;  //mq, object detection
     int16_t sonar_distance2;  //mq, object detection
     int16_t sonar_distance3;  //mq, object detection
+
+    /* 
     int16_t sonar_distance4;  //mq, object detection
     int16_t sonar_distance5;  //mq, object detection
     int16_t sonar_distance6;  //mq, object detection
@@ -661,10 +665,14 @@ private:
     int16_t sonar_distance8;  //mq, object detection
     int16_t sonar_distance9;  //mq, object detection
     int16_t sonar_distance10;  //mq, object detection
+    */
+
     int16_t sonar_distance_used; //mq
     float distance_k_plus;  //mq
     float P_k_plus;
     float velocity_for_distance_estimation;
+    float roll_velocity_log;        //mq
+    float target_roll_velocity_log; //mq
 
 #define BUFFER_SIZE 19   //mq for tera
 
@@ -678,10 +686,10 @@ private:
 
 
     //bool process_input_teraranger();   //added by MQ for teraranger
-    //bool process_reply_T();   //added by MQ for teraranger
-    //void clear_buffers_T();   //added by MQ for teraranger
-    //uint8_t crc8(uint8_t *p, uint8_t len); ////added by MQ for teraranger
-    //bool process_input_teraranger2(); //added by MQ for teraranger
+    bool process_reply_T();   //added by MQ for teraranger
+    void clear_buffers_T();   //added by MQ for teraranger
+    uint8_t crc8(uint8_t *p, uint8_t len); ////added by MQ for teraranger
+    bool process_input_teraranger2(); //added by MQ for teraranger
     void read_airspeed();       //mq airspeed
     void estimate_distance() ;  //mq object avoidance
     void compass_accumulate(void);
@@ -975,7 +983,8 @@ private:
     bool testmode2_init(bool ignore_checks);  //added by MQ
     void testmode2_run();                       //added by MQ
     //void object_fence_right(); //mq obstacle
-    float PID_control(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float *I_previous); //mq obstacle
+    float PID_control(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float &I_previous); //mq obstacle
+    float PID_control_both_side(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float &I_previous, float tera_distance, bool right_side); //mq obstacle
 
 
     // support for AP_Avoidance custom flight mode, AVOID_ADSB

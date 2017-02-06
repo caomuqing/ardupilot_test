@@ -42,7 +42,7 @@ void Copter::init_rangefinder(void)
 // return rangefinder altitude in centimeters
 void Copter::read_rangefinder(void)
 {
-    int16_t sonar_fence = 80; //mq, in cm
+    //int16_t sonar_fence = 80; //mq, in cm
 
 #if RANGEFINDER_ENABLED == ENABLED
     rangefinder.update();
@@ -51,18 +51,11 @@ void Copter::read_rangefinder(void)
 
     int16_t temp_alt = rangefinder.distance_cm();
 
+    /*
+    
     if(rangefinder.has_data(1))                   //mq, object detection}
     {   
-
-        /*
-        sonar_distance10 = sonar_distance9; //apply median filter, mq
-        sonar_distance9 = sonar_distance8; 
-        sonar_distance8 = sonar_distance7; 
-        sonar_distance7 = sonar_distance6; 
-        sonar_distance6 = sonar_distance5; 
-        sonar_distance5 = sonar_distance4; 
-        sonar_distance4 = sonar_distance3; 
-        */         
+       
         sonar_distance3 = sonar_distance2;
         sonar_distance2 = sonar_distance1;
         sonar_distance1 = rangefinder.distance_cm(1); 
@@ -84,7 +77,10 @@ void Copter::read_rangefinder(void)
     }
     else    {sonar_distance_used = 1000;}       //mq, object detection
     
+
     estimate_distance(); 
+
+    */
 
  #if RANGEFINDER_TILT_CORRECTION == ENABLED
     // correct alt for angle of the rangefinder
@@ -116,7 +112,8 @@ void Copter::read_rangefinder(void)
 #endif
 }
 
-void Copter::estimate_distance()        //mq kalman filter for sideway distance estimation
+/*
+void Copter::estimate_distance()        //mq kalman filter for sideway distance estimation MQ
 {
     float system_covariance_Q = 20.0;   //in cm/s
     float measurement_covariance_R = 100.0;  //in cm
@@ -133,6 +130,7 @@ void Copter::estimate_distance()        //mq kalman filter for sideway distance 
     float roll_vel =  vel.y * ahrs.cos_yaw() - vel.x * ahrs.sin_yaw(); // mq, body roll vel in cm/s
     velocity_for_distance_estimation = roll_vel;
 }
+*/
 
 
 // return true if rangefinder_alt can be used

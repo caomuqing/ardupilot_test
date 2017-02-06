@@ -53,11 +53,12 @@ void Copter::testmode1_run()
     //    return;
     //}
 
-    float obstacle_distance_limit = 100;  //mq, in cm parameter
-    float scaling_factor = 10;  //mq
-    float Kp = 6.0;     //parameter
-    float Ki = 0.02;    //parameter
+    float obstacle_distance_limit = 200;  //mq, in cm parameter
+    float distance_to_velocity_scaling_factor = 5.0;  //mq
+    float Kp = 15.0;     //parameter
+    float Ki = 0.005;    //parameter
     float Kd = 0.005;   //parameter
+    float velocity_approach_factor = 6.0; //parameter
 
 
     AltHoldModeState althold_state;
@@ -85,7 +86,11 @@ void Copter::testmode1_run()
 
     // rotate roll, pitch input from north facing to vehicle's perspective
     float roll_vel =  vel.y * ahrs.cos_yaw() - vel.x * ahrs.sin_yaw(); // mq, body roll vel in cm/s
-    float target_roll_vel = scaling_factor *(distance_k_plus - obstacle_distance_limit);  //mq, in cm/s
+    float target_roll_vel = distance_to_velocity_scaling_factor *(tera_distance_right - obstacle_distance_limit);  //mq, in cm/s
+    float target_roll_vel_left = distance_to_velocity_scaling_factor *(obstacle_distance_limit - tera_distance_left) ; //mq, in cm/s
+    float target_roll_vel_right = distance_to_velocity_scaling_factor *(tera_distance_right - obstacle_distance_limit); //mq, in cm/s
+    roll_velocity_log = roll_vel;               //for logging mq
+    target_roll_velocity_log = target_roll_vel; //for logging mq 
 
 #if FRAME_CONFIG == HELI_FRAME
     // helicopters are held on the ground until rotor speed runup has finished
@@ -167,26 +172,64 @@ void Copter::testmode1_run()
         motors.set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
         // call attitude controller
 
-
-        // start of object detection and ovoidance part, mq
-        if (distance_k_plus < obstacle_distance_limit)  //if object if very close
+        if (0)   //one soded object avoidance enabled
         {
+        // start of object detection and ovoidance part, mq
+            if (tera_distance_right < obstacle_distance_limit)  //if object if very close
+            {
 
-            target_roll = PID_control(roll_vel, target_roll_vel, target_roll, Kp, Ki, Kd, &I_accumulation_right);
-
-        }
-
-
-        else{
-            if (roll_vel>target_roll_vel/5.0)   //activate only if veloity of approach limit is too high
-                {target_roll = PID_control(roll_vel, target_roll_vel/5.0, target_roll, Kp, Ki, Kd, &I_accumulation_right);
-
-                }
-
-            else {I_accumulation_right = 0.0; }
+                target_roll = PID_control(roll_vel, target_roll_vel, target_roll, Kp, Ki, Kd, I_accumulation_right);
 
             }
 
+
+            else{
+                if (roll_vel>target_roll_vel/velocity_approach_factor)   //activate only if veloity of approach limit is too high
+                    {target_roll = PID_control(roll_vel, target_roll_vel/velocity_approach_factor, target_roll, Kp, Ki, Kd, I_accumulation_right);
+                        target_roll_velocity_log = target_roll_vel/velocity_approach_factor;  //mq for logging only
+                    }
+
+                else {I_accumulation_right = 0.0; }  //clear the I term
+
+                }
+
+        }
+
+        else            //mq, code for doubled sided object avoidance
+        {
+             if (tera_distance_right< obstacle_distance_limit)   
+             {
+                target_roll = PID_control_both_side(roll_vel, target_roll_vel_right, target_roll, Kp, Ki, Kd, I_accumulation_right, tera_distance_right, true);
+             }
+
+            else if(roll_vel>target_roll_vel_right/velocity_approach_factor)
+            {
+                target_roll = PID_control_both_side(roll_vel, target_roll_vel_right/velocity_approach_factor, target_roll, Kp, Ki, Kd, I_accumulation_right, tera_distance_right, true);
+                target_roll_velocity_log = target_roll_vel_right/velocity_approach_factor;  //mq for logging only
+                    
+            }
+
+            else    { I_accumulation_right = 0.0;  //zero the I term 
+                        }
+
+                if (tera_distance_left< obstacle_distance_limit)
+            {
+                target_roll = PID_control_both_side(roll_vel, target_roll_vel_left, target_roll, Kp, Ki, Kd, I_accumulation_left, tera_distance_left, false);
+            }
+
+            else if(roll_vel<target_roll_vel_left/velocity_approach_factor)
+            {
+                target_roll = PID_control_both_side(roll_vel, target_roll_vel_left/velocity_approach_factor, target_roll, Kp, Ki, Kd, I_accumulation_left, tera_distance_left, false);
+            }
+
+            else
+            {
+                
+                I_accumulation_left = 0.0; //zero the I term
+
+            }
+
+        }
             target_roll = constrain_float(target_roll, -4500.0, 4500.0);  //mq, constrain the output angle to +-40degree
 
            // distance_1 = target_roll;
@@ -244,20 +287,20 @@ void Copter::object_fence_right(float obstacle_distance_limit)
 
 */
 
-float Copter::PID_control(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float *I_previous)
+float Copter::PID_control(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float &I_previous)
 {   float output;
     float dt = 0.0025; //400hz loop
     float P_term, I_term, D_term;
-    float I_term_previous = *I_previous;
+    float I_term_previous = I_previous;
     float error =target_state - current_tate; //in cm/s
     float error_factor=1.0; //
-    float outside_fence = 130.0;  //parameter
-    float inside_fence = 110.0;     //parameter
+    float outside_fence = 210.0;  //parameter, the distance starting from which pilor input starts to decay
+    float inside_fence = 200.0;     //parameter
 
-    if ( distance_k_plus< outside_fence)  //scale down the input when error approach limit
-        {error_factor = ( distance_k_plus - inside_fence)/(outside_fence - inside_fence); //proportionally scale down the input between fence and outskirt
+    if ( tera_distance_right< outside_fence)  //scale down the input when error approach limit
+        {error_factor = ( tera_distance_right - inside_fence)/(outside_fence - inside_fence); //proportionally scale down the input between fence and outskirt
 
-            if ( distance_k_plus < inside_fence)
+            if ( tera_distance_right < inside_fence)
             {
                 error_factor = 0.0; //no input when it is within the fence
             }
@@ -268,6 +311,53 @@ float Copter::PID_control(float current_tate, float target_state, float input, f
     D_term = 0;
     I_term = I_term_previous + error*Ki;
     output = input*error_factor + P_term + I_term + D_term; //scaled input plus PID terms
-    *I_previous = I_term;
+    I_previous = I_term;
+    return output;
+}
+
+
+float Copter::PID_control_both_side(float current_tate, float target_state, float input, float Kp, float Ki, float Kd, float &I_previous, float tera_distance, bool right_side)
+{   float output;
+    //float dt = 0.0025; //400hz loop
+    float P_term, I_term, D_term;
+    float I_term_previous = I_previous;
+    float error =target_state - current_tate; //in cm/s
+    float error_factor=1.0; //
+    float outside_fence = 210.0;  //parameter, the distance starting from which pilor input starts to decay
+    float inside_fence = 200.0;     //parameter
+
+    if ( tera_distance< outside_fence)  //scale down the input when error approach limit
+        {
+            if(right_side)   // apply check to reject only approaching command
+            {   
+                if (input>0)   {  
+                    error_factor = ( tera_distance - inside_fence)/(outside_fence - inside_fence); //proportionally scale down the input between fence and outskirt
+
+                    if ( tera_distance < inside_fence)
+                    {
+                        error_factor = 0.0; //no input when it is within the fence
+                    }
+                }
+                else{error_factor = 1.0;}   //command to back off is as normal
+            }
+            else    
+            {
+                if (input<0)   {  
+                    error_factor = ( tera_distance - inside_fence)/(outside_fence - inside_fence); //proportionally scale down the input between fence and outskirt
+
+                    if ( tera_distance < inside_fence)
+                    {
+                        error_factor = 0.0; //no input when it is within the fence
+                    }
+                }
+                else{error_factor = 1.0;}   //command to back off is as normal
+            }
+        }
+
+    P_term = Kp*error;
+    D_term = 0;
+    I_term = I_term_previous + error*Ki;
+    output = input*error_factor + P_term + I_term + D_term; //scaled input plus PID terms
+    I_previous = I_term;
     return output;
 }
